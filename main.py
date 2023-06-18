@@ -287,7 +287,8 @@ def main(page:Page):
 					Image(src=x.collection_id['image'],width=300,height=200),
 					Row([
 					Text(x.collection_id['name_br'],size=25,
-						weight="bold"
+						weight="bold",
+						color="blue"
 						),
 					Text(f"{x.collection_id['stock']} Pcs",
 				color="green" if x.collection_id['stock'] > 5 else "red",
@@ -295,7 +296,9 @@ def main(page:Page):
 						)
 						],alignment="spaceBetween"),
 					Row([
-					Text(x.collection_id['price'],size=20,weight="bold"),
+					Text(x.collection_id['price'],size=20,weight="bold",
+						color="green"
+						),
 					Text(x.collection_id['category'],
 						size=10,weight="bold",
 					color="green" if x.collection_id['category'] == "New product" else "blue"
@@ -303,7 +306,9 @@ def main(page:Page):
 
 					],alignment="spaceBetween"),
 					Row([
-					Text(x.collection_id['description'])					
+					Text(x.collection_id['description'],
+						color="blue"
+						)					
 						],wrap=True),
 					Row([
 						ElevatedButton("Order This",
@@ -454,6 +459,7 @@ def main(page:Page):
 	page.add(
 		AppBar(
 		title=Text("Food App",size=30,weight="bold",
+			color="blue"
 			),
 		bgcolor="yellow",
 		actions=[
