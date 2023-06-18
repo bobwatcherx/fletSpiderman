@@ -284,7 +284,7 @@ def main(page:Page):
 					bgcolor="yellow100",
 					padding=10,
 				content=Column([
-					Image(src=x.collection_id['image']),
+					Image(src=x.collection_id['image'],width=300,height=200),
 					Row([
 					Text(x.collection_id['name_br'],size=25,
 						weight="bold"
