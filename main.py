@@ -306,8 +306,8 @@ def main(page:Page):
 					Text(x.collection_id['description'])					
 						],wrap=True),
 					Row([
-						ElevatedButton("Create Invoice",
-						bgcolor="green",color="white",
+						ElevatedButton("Order This",
+						bgcolor="pink",color="white",
 						data=x.collection_id,
 						on_click=createnewinvoice
 							)
@@ -348,7 +348,7 @@ def main(page:Page):
 		page.update()
 
 	dialognewdata = AlertDialog(
-			title=Text("Add Data",weight="bold"),
+			title=Text("Add Foods",weight="bold"),
 			content=Column([
 				TextField(label="image Link"),
 				TextField(label="name"),
@@ -357,8 +357,10 @@ def main(page:Page):
 					Dropdown(
 					width=100,
 					options=[
-						dropdown.Option("New product"),
-						dropdown.Option("Old product"),
+						dropdown.Option("Drinks"),
+						dropdown.Option("Snacks"),
+						dropdown.Option("Rice"),
+						dropdown.Option("Meal"),
 					]
 					),
 					],alignment="spaceBetween"),
@@ -403,7 +405,7 @@ def main(page:Page):
 	listinvoice = Column(scroll="auto",visible=False,
 		controls=[
 		Row([
-			Text("Invoice Daily",size=25,weight="bold"),
+			Text("Order Daily",size=25,weight="bold"),
 			closewindow
 			],alignment="spaceBetween"),
 		datainvoice
@@ -412,7 +414,7 @@ def main(page:Page):
 	listmasukin = Column(scroll="auto",visible=False,
 		controls=[
 		Row([
-			Text("Incoming",size=25,weight="bold",color="green"),
+			Text("Incoming Foods",size=25,weight="bold",color="green"),
 			closewindow
 			],alignment="spaceBetween"),
 		barangmasuklist
@@ -421,7 +423,7 @@ def main(page:Page):
 	listkeluar = Column(scroll="auto",visible=False,
 		controls=[
 		Row([
-			Text("Outgoing",size=25,weight="bold",color="red"),
+			Text("Outgoing Foods",size=25,weight="bold",color="red"),
 			closewindow
 			],alignment="spaceBetween"),
 		barangkeluarout
@@ -451,7 +453,7 @@ def main(page:Page):
 
 	page.add(
 		AppBar(
-		title=Text("Inventory App",size=30,weight="bold",
+		title=Text("Food App",size=30,weight="bold",
 			),
 		bgcolor="yellow",
 		actions=[
@@ -461,8 +463,8 @@ def main(page:Page):
 		]
 			),
 		Row([
-		ElevatedButton("Invoice",
-			bgcolor="blue",color="white",
+		ElevatedButton("Order",
+			bgcolor="orange",color="white",
 			on_click=dialoginvoice
 			),
 		ElevatedButton("IN",
