@@ -3,7 +3,7 @@ from pocketbase import PocketBase
 import random
 from datetime import datetime
 
-client = PocketBase('http://localhost:8090')
+client = PocketBase('https://boundless-nail.pockethost.io')
 
 def main(page:Page):
 	page.window_width = 300
@@ -817,7 +817,7 @@ def main(page:Page):
 
 	
 
-	
+
 
 	
 
