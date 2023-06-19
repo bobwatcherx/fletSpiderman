@@ -3,7 +3,7 @@ from pocketbase import PocketBase
 import random
 from datetime import datetime
 
-client = PocketBase('https://boundless-nail.pockethost.io')
+client = PocketBase('http://localhost:8090')
 
 def main(page:Page):
 	page.window_width = 300
@@ -18,7 +18,117 @@ def main(page:Page):
 	mysnack = SnackBar(content=Text())
 
 
+	def changeregister(e):
+		if e.control.value == True:
+			ct_login.content.controls[0].controls[0].value = "Register Now"
+			ct_login.content.controls[2].visible = True
+			ct_login.content.controls[4].visible = False
+			ct_login.content.controls[5].visible = True
+		else:
+			ct_login.content.controls[0].controls[0].value = "Login User"
+			ct_login.content.controls[2].visible = False
+			ct_login.content.controls[4].visible = True
+			ct_login.content.controls[5].visible = False
+		page.update()
+
+	def registernow(e):
+		print("3231",ct_login.content.controls[1].value)
+		try:
+			data = {
+				"username": ct_login.content.controls[1].value,
+			    "email": ct_login.content.controls[2].value,
+			    "emailVisibility": True,
+			    "password": ct_login.content.controls[3].value,
+			    "passwordConfirm": ct_login.content.controls[3].value,
+			    "name": ct_login.content.controls[1].value
+			}
+			res = client.collection("users").create(data)
+			page.snack_bar = SnackBar(
+				content=Text("User Created",size=20,color="white"),
+				bgcolor="green"
+				)
+			page.snack_bar.open = True
+			ct_login.content.controls[1].value = ""
+			ct_login.content.controls[2].value = ""
+			ct_login.content.controls[3].value = ""
+			ct_login.content.controls[0].controls[0].value = "Login User"
+			ct_login.content.controls[2].visible = False
+			ct_login.content.controls[4].visible = True
+			ct_login.content.controls[5].visible = False
+			ct_login.content.controls[6].value = False
+		except Exception as e:
+			print(e)
+			page.snack_bar = SnackBar(
+				content=Text(e,size=20,color="white"),
+				bgcolor="red"
+				)
+			page.snack_bar.open = True
+		page.update()
+
+	def loginnow(e):
+		try:
+			login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
+			page.snack_bar = SnackBar(
+				content=Text("Success Login",size=25,color="white"),
+				bgcolor="green"
+				)
+			ct_login.visible = False
+			ct_dashboard.visible = True
+			page.snack_bar.open = True
+			setkey = page.client_storage.set("userlog", ct_login.content.controls[1].value)
+			# LOAD DATA
+			getproductlist()
+			getinvoicedata()
+			getforincoming()
+			getforoutgoing()
+			getlisthistoryin()
+			getlisthistoryout()
+		except Exception as e:
+			print(e)
+			page.snack_bar = SnackBar(
+				content=Text(e,size=25,color="white"),
+				bgcolor="red"
+				)
+			page.snack_bar.open = True
+
+		page.update()
+
+	ct_login = Container(
+		width=page.window_width,
+		content=Column([
+			Row([
+				Text("Login User",size=25,weight="bold")
+				]),
+			TextField(label="username"),
+			TextField(label="Email",visible=False),
+			TextField(label="password",
+				password=True, can_reveal_password=True
+				),
+			ElevatedButton("Login",
+				bgcolor="orange",
+				color="white",
+				on_click=loginnow,
+				visible=True
+				),
+			ElevatedButton("Register",
+				bgcolor="green",
+				color="white",
+				on_click=registernow,
+				visible=False
+				),
+			Checkbox(label="No Have Account ? , register now",
+				value=False,
+				on_change=changeregister
+				)
+			])
+		)
+
 	def submitnewinvoice(e):
+		login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
 		totalprice = int(dialogcreateinvoice.content.controls[3].value) * int(dialogcreateinvoice.content.controls[4].controls[1].value)
 		print(totalprice)
 		try:
@@ -83,6 +193,9 @@ def main(page:Page):
 
 
 	def createnewinvoice(e):
+		login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
 		random_number = random.randint(10000000, 99999999)
 
 		# Mendapatkan tanggal dan waktu saat ini
@@ -103,6 +216,9 @@ def main(page:Page):
 
 
 	def submitaddincoming(e):
+		login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
 		update_id = dialogaddincoming.content.controls[0].value
 		newupdate = {
 			"stock":int(dialogaddincoming.content.controls[1].value) + int(dialogaddincoming.content.controls[2].controls[1].value)
@@ -138,6 +254,9 @@ def main(page:Page):
 		except Exception as e:
 			print(e)
 	def submitaddoutcoming(e):
+		login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
 		update_id = dialogaddoutgoing.content.controls[0].value
 		print("#######",int(dialogaddoutgoing.content.controls[2].controls[1].value),int(dialogaddoutgoing.content.controls[1].value))
 		newupdate = {
@@ -215,6 +334,9 @@ def main(page:Page):
 		actions_alignment="end"
 		)
 	def addincoming(e):
+		login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
 		data = e.control.data
 		dialogaddincoming.content.controls[0].value = data['id']
 		dialogaddincoming.content.controls[2].controls[1].value = data['stock']
@@ -223,6 +345,9 @@ def main(page:Page):
 		dialogaddincoming.open = True
 		page.update()
 	def addoutgoing(e):
+		login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
 		data = e.control.data
 		dialogaddoutgoing.content.controls[0].value = data['id']
 		dialogaddoutgoing.content.controls[2].controls[1].value = data['stock']
@@ -232,6 +357,9 @@ def main(page:Page):
 		page.update()
 	# get all data for incoming
 	def getforoutgoing():
+		login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
 		barangkeluarout.controls.clear()
 		getout = client.collection("col_stock").get_list()
 		for x in getout.items:
@@ -261,6 +389,9 @@ def main(page:Page):
 
 	# GET LIST HISTORY IN
 	def getlisthistoryin():
+		login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
 		seelistinhistory.controls.clear()
 		getlistin = client.collection("incoming_history").get_list()
 		for x in getlistin.items:
@@ -303,6 +434,9 @@ def main(page:Page):
 
 	# GET ALL HUSTORY OUT
 	def getlisthistoryout():
+		login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
 		seelistouthistory.controls.clear()
 		getlistout = client.collection("outcoming_history").get_list()
 		for x in getlistout.items:
@@ -345,6 +479,9 @@ def main(page:Page):
 
 	# get all data for incoming
 	def getforincoming():
+		login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
 		barangmasuklist.controls.clear()
 		getin = client.collection("col_stock").get_list()
 		for x in getin.items:
@@ -374,7 +511,11 @@ def main(page:Page):
 
 	# get all INVOICE DATA
 	def getinvoicedata():
+		login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
 		datainvoice.controls.clear()
+		
 		getinv = client.collection("col_report").get_list()
 		print(getinv)
 		for x in getinv.items:
@@ -401,7 +542,11 @@ def main(page:Page):
 
 	# GET ALL LIST PRODUCT
 	def getproductlist():
+		login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
 		productList.controls.clear()
+		
 		getdata = client.collection("col_stock").get_list()
 		for x in getdata.items:
 			productList.controls.append(
@@ -448,19 +593,18 @@ def main(page:Page):
 		page.update()
 	
 
-	# LOAD DATA
-
-	getproductlist()
-	getinvoicedata()
-	getforincoming()
-	getforoutgoing()
-	getlisthistoryin()
-	getlisthistoryout()
+	
 
 
 
 	def addnewdata(e):
 		try:
+			login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
+			user_data = client.collection("users").auth_with_password(
+  	ct_login.content.controls[1].value, ct_login.content.controls[3].value)
+			
 			res = client.collection("col_stock").create({
 			 "image": dialognewdata.content.controls[0].value,
 		    "name_br": dialognewdata.content.controls[1].value,
@@ -671,106 +815,13 @@ def main(page:Page):
 			])
 		)
 
-	def registernow(e):
-		print("3231",ct_login.content.controls[1].value)
-		try:
-			data = {
-				"username": ct_login.content.controls[1].value,
-			    "email": ct_login.content.controls[2].value,
-			    "emailVisibility": True,
-			    "password": ct_login.content.controls[3].value,
-			    "passwordConfirm": ct_login.content.controls[3].value,
-			    "name": ct_login.content.controls[1].value
-			}
-			res = client.collection("users").create(data)
-			page.snack_bar = SnackBar(
-				content=Text("User Created",size=20,color="white"),
-				bgcolor="green"
-				)
-			page.snack_bar.open = True
-			ct_login.content.controls[1].value = ""
-			ct_login.content.controls[2].value = ""
-			ct_login.content.controls[3].value = ""
-			ct_login.content.controls[0].controls[0].value = "Login User"
-			ct_login.content.controls[2].visible = False
-			ct_login.content.controls[4].visible = True
-			ct_login.content.controls[5].visible = False
-			ct_login.content.controls[6].value = False
-		except Exception as e:
-			print(e)
-			page.snack_bar = SnackBar(
-				content=Text(e,size=20,color="white"),
-				bgcolor="red"
-				)
-			page.snack_bar.open = True
-		page.update()
+	
 
-	def loginnow(e):
-		try:
-			login = client.collection("users").auth_with_password(
-			ct_login.content.controls[1].value,ct_login.content.controls[3].value
-				)
-			page.snack_bar = SnackBar(
-				content=Text("Success Login",size=25,color="white"),
-				bgcolor="green"
-				)
-			ct_login.visible = False
-			ct_dashboard.visible = True
-			page.snack_bar.open = True
-			setkey = page.client_storage.set("userlog", ct_login.content.controls[1].value)
+	
 
-		except Exception as e:
-			print(e)
-			page.snack_bar = SnackBar(
-				content=Text(e,size=25,color="white"),
-				bgcolor="red"
-				)
-			page.snack_bar.open = True
+	
 
-		page.update()
-
-	def changeregister(e):
-		if e.control.value == True:
-			ct_login.content.controls[0].controls[0].value = "Register Now"
-			ct_login.content.controls[2].visible = True
-			ct_login.content.controls[4].visible = False
-			ct_login.content.controls[5].visible = True
-		else:
-			ct_login.content.controls[0].controls[0].value = "Login User"
-			ct_login.content.controls[2].visible = False
-			ct_login.content.controls[4].visible = True
-			ct_login.content.controls[5].visible = False
-		page.update()
-
-	ct_login = Container(
-		width=page.window_width,
-		content=Column([
-			Row([
-				Text("Login User",size=25,weight="bold")
-				]),
-			TextField(label="username"),
-			TextField(label="Email",visible=False),
-			TextField(label="password",
-				password=True, can_reveal_password=True
-				),
-			ElevatedButton("Login",
-				bgcolor="orange",
-				color="white",
-				on_click=loginnow,
-				visible=True
-				),
-			ElevatedButton("Register",
-				bgcolor="green",
-				color="white",
-				on_click=registernow,
-				visible=False
-				),
-			Checkbox(label="No Have Account ? , register now",
-				value=False,
-				on_change=changeregister
-				)
-			])
-		)
+	
 	page.add(
 		AppBar(
 		title=Text("Food App",size=30,weight="bold",
