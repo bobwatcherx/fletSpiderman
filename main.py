@@ -12,6 +12,9 @@ def main(page:Page):
 	datainvoice = Column(scroll="auto")
 	barangmasuklist = Column(scroll="auto")
 	barangkeluarout = Column(scroll="auto")
+	seelistinhistory = Column(visible=False)
+	seelistouthistory = Column(visible=False)
+	page.client_storage.remove("userlog")
 	mysnack = SnackBar(content=Text())
 
 
@@ -106,6 +109,19 @@ def main(page:Page):
 		}
 		try:
 			res = client.collection("col_stock").update(update_id,newupdate)
+			datenow = datetime.now()
+			actualinstock = int(dialogaddincoming.content.controls[1].value) + int(dialogaddincoming.content.controls[2].controls[1].value)
+			# AND ADD TO INCOMING COLLECT
+			datamsg = {
+			"message": dialogaddincoming.content.controls[3].value,
+		    "name_br": dialogaddincoming.content.controls[4].value,
+		    "stock_lates": actualinstock,
+		    "get_stock":dialogaddincoming.content.controls[1].value,
+		    "time": datenow.strftime("%H:%M"),
+		    "date": datenow.strftime("%d%m%y")
+			}
+			addinputmsg = client.collection("incoming_history").create(datamsg)
+			
 			mysnack.content = Text("Success Add Stock",size=30)
 			mysnack.bgcolor = "green"
 			page.snack_bar  = mysnack
@@ -115,8 +131,10 @@ def main(page:Page):
 			getforoutgoing()
 			getproductlist()
 			dialogaddincoming.content.controls[1].value = ""
+			dialogaddincoming.content.controls[3].value = ""
 
 			page.update()
+			getlisthistoryin()
 		except Exception as e:
 			print(e)
 	def submitaddoutcoming(e):
@@ -127,6 +145,20 @@ def main(page:Page):
 		}
 		try:
 			res = client.collection("col_stock").update(update_id,newupdate)
+			
+			datenow = datetime.now()
+			actualstock = int(dialogaddoutgoing.content.controls[2].controls[1].value) - int(dialogaddoutgoing.content.controls[1].value)
+			dataoutmsg = {
+			"message": dialogaddoutgoing.content.controls[3].value,
+		    "name_br": dialogaddoutgoing.content.controls[4].value,
+		    "latest_stock": actualstock,
+		    "get_stock":dialogaddoutgoing.content.controls[1].value,
+		    "time": datenow.strftime("%H:%M"),
+		    "date": datenow.strftime("%d%m%y")
+			}
+			outstockmsg = client.collection("outcoming_history").create(dataoutmsg)
+			
+
 			mysnack.content = Text("Success Out Stock",size=30)
 			mysnack.bgcolor = "red"
 			page.snack_bar  = mysnack
@@ -135,7 +167,9 @@ def main(page:Page):
 			getforoutgoing()
 			getforincoming()
 			getproductlist()
+			getlisthistoryout()
 			dialogaddoutgoing.content.controls[1].value = ""
+			dialogaddoutgoing.content.controls[3].value = ""
 			page.update()
 		except Exception as e:
 			print(e)
@@ -146,9 +180,11 @@ def main(page:Page):
 			TextField(label="Id Data",disabled=True),
 			TextField(label="Input add Stock",border_color="green"),
 			Row([
-			Text("last stock"),
+			Text("last stock",weight="bold"),
 			Text(0)	
-				])
+				],alignment="center"),
+			TextField(label="Add Message For Input Stock"),
+			TextField(label="Food Name",disabled=True),
 			]),
 		actions=[
 		ElevatedButton("add new now",bgcolor="green",
@@ -164,9 +200,11 @@ def main(page:Page):
 			TextField(label="Id Data",disabled=True),
 			TextField(label="Input Out Stock",border_color="red"),
 			Row([
-			Text("last stock"),
+			Text("last stock",weight="bold"),
 			Text(0)	
-				])
+				],alignment="center"),
+			TextField(label="Add Message For Out Stock"),
+			TextField(label="Food Name",disabled=True),
 			]),
 		actions=[
 		ElevatedButton("add out Stok",bgcolor="red",
@@ -180,6 +218,7 @@ def main(page:Page):
 		data = e.control.data
 		dialogaddincoming.content.controls[0].value = data['id']
 		dialogaddincoming.content.controls[2].controls[1].value = data['stock']
+		dialogaddincoming.content.controls[4].value = data['name_br']
 		page.dialog = dialogaddincoming
 		dialogaddincoming.open = True
 		page.update()
@@ -187,6 +226,7 @@ def main(page:Page):
 		data = e.control.data
 		dialogaddoutgoing.content.controls[0].value = data['id']
 		dialogaddoutgoing.content.controls[2].controls[1].value = data['stock']
+		dialogaddoutgoing.content.controls[4].value = data['name_br']
 		page.dialog = dialogaddoutgoing
 		dialogaddoutgoing.open = True
 		page.update()
@@ -214,6 +254,91 @@ def main(page:Page):
 					],alignment="end")
 					])
 
+					)
+				)
+		page.update()
+
+
+	# GET LIST HISTORY IN
+	def getlisthistoryin():
+		seelistinhistory.controls.clear()
+		getlistin = client.collection("incoming_history").get_list()
+		for x in getlistin.items:
+			seelistinhistory.controls.append(
+				Container(
+				border_radius=30,
+				bgcolor="green",
+				padding=15,
+				content=Column([
+					Text(x.collection_id['name_br'],size=25,weight="bold",
+						color="white"
+						),
+					Row([
+					Text(f"Message : {x.collection_id['message']}",color="white"),
+						],wrap=True),
+					Row([
+						Text(f"get Stock : {x.collection_id['get_stock']}",
+							color="white",
+							),
+						Icon(name="arrow_upward",color="white",size=25)
+						],alignment="spaceBetween"),
+					Row([
+						Text(f"Last balance : {x.collection_id['stock_lates']}",
+							color="white",
+							),
+						Icon(name="check_circle",color="white",size=25)
+						],alignment="spaceBetween"),
+					Column([
+						Text(f"created : {x.collection_id['date']}",color="white",
+							size=20
+							),
+						Text(f"Time : {x.collection_id['time']}",color="white",
+							size=20
+							),
+						])
+					])
+					)
+				)
+		page.update()
+
+	# GET ALL HUSTORY OUT
+	def getlisthistoryout():
+		seelistouthistory.controls.clear()
+		getlistout = client.collection("outcoming_history").get_list()
+		for x in getlistout.items:
+			seelistouthistory.controls.append(
+				Container(
+				border_radius=30,
+				bgcolor="red",
+				padding=15,
+				content=Column([
+					Text(x.collection_id['name_br'],size=25,weight="bold",
+						color="white"
+						),
+					Row([
+					Text(f"Message : {x.collection_id['message']}",color="white"),
+						],wrap=True),
+					Row([
+						Text(f"get Stock : {x.collection_id['get_stock']}",
+							color="white",
+							),
+						Icon(name="arrow_downward",color="white",size=25)
+						],alignment="spaceBetween"),
+					Row([
+						Text(f"Last balance : {x.collection_id['latest_stock']}",
+							color="white",
+							),
+						Icon(name="check_circle",color="white",size=25)
+						],alignment="spaceBetween"),
+					Column([
+						Text(f"created : {x.collection_id['date']}",color="white",
+							size=20
+							),
+						Text(f"Time : {x.collection_id['time']}",color="white",
+							size=20
+							),
+						])
+					])
 					)
 				)
 		page.update()
@@ -296,7 +421,7 @@ def main(page:Page):
 						)
 						],alignment="spaceBetween"),
 					Row([
-					Text(x.collection_id['price'],size=20,weight="bold",
+					Text(f"$ {x.collection_id['price']}",size=20,weight="bold",
 						color="green"
 						),
 					Text(x.collection_id['category'],
@@ -329,6 +454,9 @@ def main(page:Page):
 	getinvoicedata()
 	getforincoming()
 	getforoutgoing()
+	getlisthistoryin()
+	getlisthistoryout()
+
 
 
 	def addnewdata(e):
@@ -398,8 +526,27 @@ def main(page:Page):
 		listinvoice.visible = False
 		page.update()
 
+	def seehistoryin(e):
+		barangmasuklist.visible = False
+		seelistinhistory.visible = True
+		page.update()
 
 
+	def backshowincoming(e):
+		barangmasuklist.visible = True
+		seelistinhistory.visible = False
+		page.update()
+
+	def seehistoryout(e):
+		barangkeluarout.visible = False
+		seelistouthistory.visible = True
+		page.update()
+
+
+	def backshowoutcoming(e):
+		barangkeluarout.visible = True
+		seelistouthistory.visible = False
+		page.update()
 
 	closewindow = IconButton(icon="close",icon_size=30,
 				icon_color="red",
@@ -422,7 +569,16 @@ def main(page:Page):
 			Text("Incoming Foods",size=25,weight="bold",color="green"),
 			closewindow
 			],alignment="spaceBetween"),
-		barangmasuklist
+		Row([
+			TextButton("see History In",
+			on_click=seehistoryin
+			),
+			IconButton(icon="playlist_add_check",icon_color="green",
+				on_click=backshowincoming
+				)
+			],alignment="spaceBetween"),
+		barangmasuklist,
+		seelistinhistory
 		]
 		)
 	listkeluar = Column(scroll="auto",visible=False,
@@ -431,7 +587,17 @@ def main(page:Page):
 			Text("Outgoing Foods",size=25,weight="bold",color="red"),
 			closewindow
 			],alignment="spaceBetween"),
-		barangkeluarout
+		Row([
+			ElevatedButton("see History Out",
+			color="red",
+			on_click=seehistoryout
+			),
+			IconButton(icon="playlist_add_check",icon_color="green",
+				on_click=backshowoutcoming
+				)
+			],alignment="spaceBetween"),
+		barangkeluarout,
+		seelistouthistory
 		]
 		)
 
@@ -456,19 +622,34 @@ def main(page:Page):
 		listkeluar.visible = True
 		page.update()
 
-	page.add(
-		AppBar(
-		title=Text("Food App",size=30,weight="bold",
-			color="blue"
-			),
-		bgcolor="yellow",
-		actions=[
-		IconButton(icon="library_add",icon_size=30,
-			on_click=btndialogadnew
-			),
-		]
-			),
-		Row([
+
+	def logoutnow(e):
+		page.client_storage.remove("userlog")
+		ct_dashboard.visible = False
+		ct_login.visible = True
+		ct_login.content.controls[1].value = ""
+		ct_login.content.controls[2].value = ""
+		ct_login.content.controls[3].value = ""
+		page.snack_bar = SnackBar(
+				content=Text("You Logout",size=20,color="white"),
+				bgcolor="red"
+				)
+		page.snack_bar.open = True
+		page.update()
+	userlog = page.client_storage.get("userlog")
+
+	ct_dashboard = Container(
+		visible=False if userlog == None else True,
+		content=Column([
+			Row([
+			Text(f"Hi {userlog if userlog else 'None'}",
+				weight="bold"
+				),
+			TextButton("Logout",
+				on_click=logoutnow
+				)
+				],alignment="spaceBetween"),
+			Row([
 		ElevatedButton("Order",
 			bgcolor="orange",color="white",
 			on_click=dialoginvoice
@@ -487,6 +668,123 @@ def main(page:Page):
 		listinvoice,
 		listmasukin,
 		listkeluar
+			])
+		)
+
+	def registernow(e):
+		print("3231",ct_login.content.controls[1].value)
+		try:
+			data = {
+				"username": ct_login.content.controls[1].value,
+			    "email": ct_login.content.controls[2].value,
+			    "emailVisibility": True,
+			    "password": ct_login.content.controls[3].value,
+			    "passwordConfirm": ct_login.content.controls[3].value,
+			    "name": ct_login.content.controls[1].value
+			}
+			res = client.collection("users").create(data)
+			page.snack_bar = SnackBar(
+				content=Text("User Created",size=20,color="white"),
+				bgcolor="green"
+				)
+			page.snack_bar.open = True
+			ct_login.content.controls[1].value = ""
+			ct_login.content.controls[2].value = ""
+			ct_login.content.controls[3].value = ""
+			ct_login.content.controls[0].controls[0].value = "Login User"
+			ct_login.content.controls[2].visible = False
+			ct_login.content.controls[4].visible = True
+			ct_login.content.controls[5].visible = False
+			ct_login.content.controls[6].value = False
+		except Exception as e:
+			print(e)
+			page.snack_bar = SnackBar(
+				content=Text(e,size=20,color="white"),
+				bgcolor="red"
+				)
+			page.snack_bar.open = True
+		page.update()
+
+	def loginnow(e):
+		try:
+			login = client.collection("users").auth_with_password(
+			ct_login.content.controls[1].value,ct_login.content.controls[3].value
+				)
+			page.snack_bar = SnackBar(
+				content=Text("Success Login",size=25,color="white"),
+				bgcolor="green"
+				)
+			ct_login.visible = False
+			ct_dashboard.visible = True
+			page.snack_bar.open = True
+			setkey = page.client_storage.set("userlog", ct_login.content.controls[1].value)
+
+		except Exception as e:
+			print(e)
+			page.snack_bar = SnackBar(
+				content=Text(e,size=25,color="white"),
+				bgcolor="red"
+				)
+			page.snack_bar.open = True
+
+		page.update()
+
+	def changeregister(e):
+		if e.control.value == True:
+			ct_login.content.controls[0].controls[0].value = "Register Now"
+			ct_login.content.controls[2].visible = True
+			ct_login.content.controls[4].visible = False
+			ct_login.content.controls[5].visible = True
+		else:
+			ct_login.content.controls[0].controls[0].value = "Login User"
+			ct_login.content.controls[2].visible = False
+			ct_login.content.controls[4].visible = True
+			ct_login.content.controls[5].visible = False
+		page.update()
+
+	ct_login = Container(
+		width=page.window_width,
+		content=Column([
+			Row([
+				Text("Login User",size=25,weight="bold")
+				]),
+			TextField(label="username"),
+			TextField(label="Email",visible=False),
+			TextField(label="password",
+				password=True, can_reveal_password=True
+				),
+			ElevatedButton("Login",
+				bgcolor="orange",
+				color="white",
+				on_click=loginnow,
+				visible=True
+				),
+			ElevatedButton("Register",
+				bgcolor="green",
+				color="white",
+				on_click=registernow,
+				visible=False
+				),
+			Checkbox(label="No Have Account ? , register now",
+				value=False,
+				on_change=changeregister
+				)
+			])
+		)
+	page.add(
+		AppBar(
+		title=Text("Food App",size=30,weight="bold",
+			color="blue"
+			),
+		bgcolor="yellow",
+		actions=[
+		IconButton(icon="library_add",icon_size=30,
+			on_click=btndialogadnew
+			),
+		]
+			),
+		ct_login,
+		ct_dashboard
 		
 		)
 
